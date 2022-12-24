@@ -1,0 +1,43 @@
+version: "3"
+services:
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    restart: unless-stopped
+    ports:
+      - 3005:3005/tcp
+      - 8324:8324/tcp
+      - 32400:32400
+      - 32469:32469/tcp
+      - 1900:1900/udp
+      - 32410:32410/udp
+      - 32412:32412/udp
+      - 32413:32413/udp
+      - 32414:32414/udp
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - VERSION=docker
+      - PLEX_CLAIM=claim-xxssfrLPHcV1SqADi599
+      - TZ=Europe/Moscow
+      - HOSTNAME=PlexServer
+    volumes:
+      - /c/docker/plex/library:/config
+      - /c/docker/plex/tvseries:/tv
+      - /c/docker/plex/movies:/movies
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+      - 6881:6881
+      - 6881:6881/udp
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - WEBUI_PORT=8080
+    volumes:
+      - /c/docker/transmission/config:/config
+      - /c/docker/transmission/downloads:/downloads
+      - /c/docker/transmission/folder:/watch
