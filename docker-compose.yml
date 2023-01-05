@@ -7,7 +7,7 @@ services:
     ports:
       - 3005:3005/tcp
       - 8324:8324/tcp
-      - 32400:32400
+      - 8000:32400
       - 32469:32469/tcp
       - 1900:1900/udp
       - 32410:32410/udp
@@ -31,7 +31,7 @@ services:
     container_name: qbittorrent
     restart: unless-stopped
     ports:
-      - 8080:8080
+      - 8001:8080
       - 6881:6881
       - 6881:6881/udp
     environment:
@@ -47,7 +47,7 @@ services:
     container_name: bitwarden
     restart: unless-stopped
     ports:
-      - 8000:80
+      - 8003:80
     volumes:
       - /d/home/bitwarden:/data
     environment:
