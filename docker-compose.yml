@@ -1,5 +1,12 @@
 version: "3"
 services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - 8080:80
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
   plex:
     image: lscr.io/linuxserver/plex:latest
     container_name: plex
@@ -31,7 +38,7 @@ services:
     container_name: qbittorrent
     restart: unless-stopped
     ports:
-      - 8001:8001
+      # - 8001:8001
       - 6881:6881
       - 6881:6881/udp
     environment:
