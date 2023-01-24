@@ -1,12 +1,61 @@
 version: "3"
 services:
-  nginx:
-    image: nginx:alpine
-    container_name: nginx
-    ports:
-      - 8080:80
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     volumes:
-      - ./nginx:/etc/nginx/conf.d
+      - ./data/portainer:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - 9000:9000
+  adguardhome:
+    image: adguard/adguardhome:latest
+    container_name: adguardhome
+    restart: unless-stopped
+    volumes:
+      - ./data/adguardhome/work:/opt/adguardhome/work
+      - ./data/adguardhome/conf:/opt/adguardhome/conf
+    ports:
+      - 53:53/tcp
+      - 53:53/udp
+      - 67:67/udp
+      - 68:68/udp
+      - 80:80/tcp
+      - 443:443/tcp
+      - 3000:3000/tcp
+      - 853:853/tcp
+      - 784:784/udp
+      - 853:853/udp
+      - 8853:8853/udp
+      - 5443:5443/tcp
+      - 5443:5443/udp
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    restart: unless-stopped
+    ports:
+      - 8001:8001 # Web
+      - 6881:6881
+      - 6881:6881/udp
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - WEBUI_PORT=8001
+      - TZ=Europe/Moscow
+    volumes:
+      # Папка основной конфигурации торрент-сервера
+      - ./data/torrent/config:/config
+      # Папка с загрузками без разбору, сюда качаем все что не сортируется
+      - ../torrent/downloads:/downloads
+      # Папка в которую можно закидывать файлы и оно будет качаться само в downloads
+      - ../torrent/watch:/watch
+      # Папка с фильмами
+      - ../torrent/movies:/movies
+      # Папка с сериалами
+      - ../torrent/serials:/serials
   plex:
     image: lscr.io/linuxserver/plex:latest
     container_name: plex
@@ -29,34 +78,53 @@ services:
       - TZ=Europe/Moscow
       - HOSTNAME=PlexServer
     volumes:
-      - /d/home/plex/library:/config
-      - /d/home/plex/tvseries:/tv
-      - /d/home/plex/movies:/movies
-      - /d/home/torrent/downloads:/downloads
-  qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent:latest
-    container_name: qbittorrent
+      - ./data/plex/library:/config
+      - ../torrent/serials:/serials
+      - ../torrent/movies:/movies
+      - ../torrent/downloads:/downloads
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
     restart: unless-stopped
-    ports:
-      # - 8001:8001
-      - 6881:6881
-      - 6881:6881/udp
     environment:
       - PUID=1000
       - PGID=1000
-      - WEBUI_PORT=8001
       - TZ=Europe/Moscow
     volumes:
-      # Папка основной конфигурации торрент-сервера
-      - ./torrent/config:/config
-      # Папка с загрузками без разбору, сюда качаем все что не сортируется
-      - ./torrent/downloads:/downloads
-      # Папка в которую можно закидывать файлы и оно будет качаться само в downloads
-      - ./torrent/watch:/watch
-      # Папка с фильмами
-      - ./torrent/movies:/movies
-      # Папка с сериалами
-      - ./torrent/serials:/serials
+      - ./data/sonarr/config:/config
+      - ../torrent/serials:/serials
+      - ../torrent/downloads:/downloads
+    ports:
+      - 8989:8989
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Moscow
+    volumes:
+      - ./data/radarr/config:/config
+      - ../torrent/movies:/movies
+      - ../torrent/downloads:/downloads
+    ports:
+      - 7878:7878
+  jackett:
+    image: lscr.io/linuxserver/jackett:latest
+    container_name: jackett
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Moscow
+      - AUTO_UPDATE=true
+      - RUN_OPTS=<run options here>
+    volumes:
+      - ./data/jackett/data:/config
+      - ../torrent/downloads:/downloads
+    ports:
+      - 9117:9117
   bitwarden:
     image: bitwardenrs/server
     container_name: bitwarden
@@ -64,7 +132,14 @@ services:
     ports:
       - 8002:80
     volumes:
-      - /d/home/bitwarden:/data
+      - ./data/bitwarden:/data
     environment:
       - WEBSOCKET_ENABLED=true
       - SIGNUPS_ALLOWED=true
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - 8080:80
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
